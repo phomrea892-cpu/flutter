@@ -1,6 +1,8 @@
+// lib/state_management/home_screen.dart
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import "package:flutter_application_1/provider/book_provider.dart";
+import 'package:flutter_application_1/models/product.dart';
+import 'package:flutter_application_1/provider/product_provider.dart';
 import 'package:flutter_application_1/provider/theme_provider.dart';
 import 'package:flutter_application_1/state_manegement/detail_screen.dart';
 import 'package:flutter_application_1/widgets/book_cart.dart';
@@ -15,13 +17,34 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final controller = ScrollController();
+  final ScrollController _scrollController = ScrollController();
+
+  String _getImageUrl(Product product) {
+    final candidates = [
+      product.coverUrl,
+      product.imageLink,
+      product.apiFeaturedImage,
+    ];
+    for (final url in candidates) {
+      if (url.trim().isNotEmpty) {
+        String fixed = url.trim();
+        if (fixed.startsWith('http://')) {
+          fixed = fixed.replaceFirst('http://', 'https://');
+        }
+        if (!fixed.startsWith('http')) {
+          fixed = 'https://$fixed';
+        }
+        return fixed;
+      }
+    }
+    return '';
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookProvider>().loadHomeBooks();
+      context.read<ProductProvider>().loadHomeBooks();
     });
   }
 
@@ -29,12 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bookProvider = context.watch<BookProvider>();
-    final bool gridStyle = bookProvider.gridStyle;
+    final provider = context.watch<ProductProvider>();
     final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
-      floatingActionButton: _buildFloating(),
+      floatingActionButton: _buildFloatingButton(),
       appBar: AppBar(
         centerTitle: true,
         title: const Row(
@@ -43,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.storefront, color: Color(0xFF6B4EFF)),
             SizedBox(width: 8),
             Text(
-              'Skin Store',
+              'HEALTHCARE Store',
               style: TextStyle(
                 color: Colors.brown,
                 fontWeight: FontWeight.bold,
@@ -58,141 +80,135 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Icon(
-                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                isDark ? Icons.light_mode : Icons.dark_mode,
                 key: ValueKey(isDark),
               ),
             ),
           ),
           IconButton(
-            onPressed: () {
-              context.read<BookProvider>().toggleGridStyle();
-            },
-            icon: Icon(gridStyle ? Icons.list : Icons.grid_view),
+            onPressed: provider.toggleGridStyle,
+            icon: Icon(provider.gridStyle ? Icons.list : Icons.grid_view),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Consumer<BookProvider>(
-        builder: (context, provider, _) {
-          if (provider.error.isNotEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 64, color: Color(0xFF6B4EFF)),
-                  const SizedBox(height: 16),
-                  Text('Failed to load', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: provider.loadHomeBooks,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
+      body: Consumer<ProductProvider>(
+        builder: (context, prov, _) {
+          if (prov.error.isNotEmpty) {
+            return _buildErrorState(theme, prov);
           }
 
-          final allBooks = [
-            ...provider.featuredBooks,
-            ...provider.trendingBooks,
-          ];
-          final isLoading =
-              provider.isLoadingFeatured || provider.isLoadingTrending;
+          final allProducts = [...prov.featuredBooks, ...prov.trendingBooks];
+          final isLoading = prov.isLoadingFeatured || prov.isLoadingTrending;
 
           return RefreshIndicator(
-            onRefresh: provider.loadHomeBooks,
+            onRefresh: prov.loadHomeBooks,
             color: const Color(0xFF6B4EFF),
             child: isLoading
-                ? _buildShimmer(isDark, gridStyle)
-                : gridStyle
-                    ? _buildGridView(allBooks, isDark)
-                    : _buildListView(allBooks, isDark),
+                ? _buildShimmer(isDark, provider.gridStyle)
+                : provider.gridStyle
+                    ? _buildGridView(allProducts, isDark)
+                    : _buildListView(allProducts),
           );
         },
       ),
     );
   }
 
-  // ── 2-column Grid (matches screenshot) ─────────────────────────────────────
-  Widget _buildGridView(List<dynamic> books, bool isDark) {
+  Widget _buildErrorState(ThemeData theme, ProductProvider prov) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Color(0xFF6B4EFF)),
+          const SizedBox(height: 8),
+          Text('Failed to load products', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          ElevatedButton(
+            onPressed: prov.loadHomeBooks,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridView(List<Product> products, bool isDark) {
     return GridView.builder(
-      controller: controller,
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         childAspectRatio: 0.65,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 20,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 15,
       ),
-      itemCount: books.length,
-      itemBuilder: (context, index) {
-        return _buildProductCard(books[index], isDark);
-      },
+      itemCount: products.length,
+      itemBuilder: (context, index) =>
+          _buildProductCard(products[index], isDark),
     );
   }
 
-  // ── List View ───────────────────────────────────────────────────────────────
-  Widget _buildListView(List<dynamic> books, bool isDark) {
+  Widget _buildListView(List<Product> products) {
     return ListView.builder(
-      controller: controller,
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: books.length,
-      itemBuilder: (context, index) {
-        return BookCard(book: books[index], isHorizontal: true);
-      },
+      itemCount: products.length,
+      itemBuilder: (context, index) =>
+          BookCard(book: products[index], isHorizontal: true),
     );
   }
 
-  // ── Single product card (image + centered title + price) ───────────────────
-  Widget _buildProductCard(dynamic book, bool isDark) {
+  Widget _buildProductCard(Product product, bool isDark) {
+    final imageUrl = _getImageUrl(product);
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => DetailScreen(book: book)),
+        MaterialPageRoute(
+          builder: (_) => DetailScreen(product: product),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Product image
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: CachedNetworkImage(
-                imageUrl: book.coverUrl,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Shimmer.fromColors(
-                  baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  highlightColor:
-                      isDark ? Colors.grey[700]! : Colors.grey[100]!,
-                  child: Container(color: Colors.white),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: const Color(0xFF6B4EFF).withOpacity(0.08),
-                  child: const Icon(Icons.image_not_supported,
-                      color: Color(0xFF6B4EFF), size: 40),
-                ),
-              ),
+              child: imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Shimmer.fromColors(
+                        baseColor:
+                            isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        highlightColor:
+                            isDark ? Colors.grey[700]! : Colors.grey[100]!,
+                        child: Container(color: Colors.white),
+                      ),
+                      errorWidget: (_, __, ___) => _errorBox(),
+                    )
+                  : _errorBox(),
             ),
           ),
           const SizedBox(height: 8),
-          // Title — centered
-          Text(
-            book.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              product.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          // Price — centered
+          const SizedBox(height: 2),
           Text(
-            'USD ${book.price?.toStringAsFixed(2) ?? "0.00"}',
+            'USD ${product.priceDouble.toStringAsFixed(2)}',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,
@@ -206,7 +222,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Shimmer skeleton ────────────────────────────────────────────────────────
+  Widget _errorBox() {
+    return Container(
+      color: const Color(0xFF6B4EFF).withOpacity(0.08),
+      child: const Icon(Icons.image_not_supported,
+          color: Color(0xFF6B4EFF), size: 40),
+    );
+  }
+
   Widget _buildShimmer(bool isDark, bool isGrid) {
     if (isGrid) {
       return GridView.builder(
@@ -273,12 +296,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Scroll-to-top FAB ───────────────────────────────────────────────────────
-  Widget _buildFloating() {
+  Widget _buildFloatingButton() {
     return FloatingActionButton(
       shape: const CircleBorder(),
       onPressed: () {
-        controller.animateTo(
+        _scrollController.animateTo(
           0,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,

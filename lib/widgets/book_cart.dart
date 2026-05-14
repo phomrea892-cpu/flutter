@@ -1,237 +1,282 @@
 // lib/widgets/book_cart.dart
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/product.dart';
+import 'package:flutter_application_1/provider/product_provider.dart';
 import 'package:flutter_application_1/state_manegement/detail_screen.dart';
-import '../models/book.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class BookCard extends StatelessWidget {
-  final Book book;
+  final Product book;
   final bool isHorizontal;
 
-  const BookCard({super.key, required this.book, this.isHorizontal = false});
+  const BookCard({
+    super.key,
+    required this.book,
+    this.isHorizontal = false,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  void _goToDetail(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetailScreen(product: book)),
+    );
+  }
 
-    if (isHorizontal) {
-      return GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => DetailScreen(book: book)),
+  String _getImageUrl() {
+    final candidates = [
+      book.imageLink,
+      book.apiFeaturedImage,
+      book.coverUrl,
+    ];
+    for (final url in candidates) {
+      if (url.toString().trim().isNotEmpty) {
+        String fixed = url.toString().trim();
+        if (fixed.startsWith('http://')) {
+          fixed = fixed.replaceFirst('http://', 'https://');
+        }
+        if (!fixed.startsWith('http')) {
+          fixed = 'https://$fixed';
+        }
+        return fixed;
+      }
+    }
+    return 'https://picsum.photos/id/237/300/300';
+  }
+
+  Widget _buildImage({
+    required double width,
+    required double height,
+    required bool isDark,
+    BorderRadius borderRadius = BorderRadius.zero,
+  }) {
+    final imageUrl = _getImageUrl();
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => _shimmerBox(width, height, isDark),
+        errorWidget: (_, __, ___) => _placeholderBox(width, height),
+        fadeInDuration: const Duration(milliseconds: 200),
+      ),
+    );
+  }
+
+  Widget _shimmerBox(double width, double height, bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+      child: Container(width: width, height: height, color: Colors.white),
+    );
+  }
+
+  Widget _placeholderBox(double width, double height) {
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey[200],
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image_not_supported_rounded,
+              size: 40, color: Colors.grey),
+          SizedBox(height: 4),
+          Text('No Image',
+              style: TextStyle(fontSize: 11, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontal(
+    BuildContext context,
+    bool isDark,
+    bool isSaved,
+    ProductProvider provider,
+  ) {
+    return GestureDetector(
+      onTap: () => _goToDetail(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Product image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: book.coverUrl,
-                  width: 70,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Shimmer.fromColors(
-                    baseColor:
-                        isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    highlightColor:
-                        isDark ? Colors.grey[700]! : Colors.grey[100]!,
-                    child: Container(
-                      width: 70,
-                      height: 100,
-                      color: Colors.white,
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    width: 70,
-                    height: 100,
-                    color: const Color(0xFF6B4EFF).withOpacity(0.1),
-                    child:
-                        const Icon(Icons.book, color: Color(0xFF6B4EFF)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Product info
-              Expanded(
+        child: Row(
+          children: [
+            _buildImage(
+              width: 90,
+              height: 110,
+              isDark: isDark,
+              borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(16)),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
                     Text(
-                      book.title,
+                      book.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 15,
+                        fontSize: 14,
                         color: isDark
                             ? Colors.white
                             : const Color(0xFF1A1A2E),
                       ),
                     ),
                     const SizedBox(height: 4),
-
-                    // Author/Brand
                     Text(
-                      book.author.isNotEmpty ? book.author : 'Unknown',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      book.productType,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: isDark
                             ? Colors.grey[400]
                             : Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Category chip
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B4EFF).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        book.category.isNotEmpty
-                            ? book.category
-                            : 'General',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF6B4EFF),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Price + Rating row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Price
                         Text(
-                          'USD ${book.price.toStringAsFixed(2)}',
+                          'USD ${book.priceDouble.toStringAsFixed(2)}',
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF6B4EFF),
                           ),
                         ),
-
-                        // Rating
-                        if (book.rating > 0)
-                          Row(
-                            children: [
-                              const Icon(Icons.star_rounded,
-                                  size: 16, color: Color(0xFFFFB800)),
-                              const SizedBox(width: 2),
-                              Text(
-                                book.rating.toStringAsFixed(1),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => provider.toggleSave(book),
+                          child: Icon(
+                            isSaved
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_border_rounded,
+                            color: isSaved
+                                ? const Color(0xFF6B4EFF)
+                                : Colors.grey,
+                            size: 22,
                           ),
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-
-              // Arrow icon
-              const Icon(Icons.arrow_forward_ios,
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.arrow_forward_ios,
                   size: 14, color: Colors.grey),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
-
-    // ── Vertical card (grid) ─────────────────────────────────────
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => DetailScreen(book: book)),
       ),
+    );
+  }
+
+  Widget _buildVertical(
+    BuildContext context,
+    bool isDark,
+    bool isSaved,
+    ProductProvider provider,
+  ) {
+    return GestureDetector(
+      onTap: () => _goToDetail(context),
       child: Container(
-        width: 130,
-        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: book.coverUrl,
-                width: 130,
-                height: 180,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Shimmer.fromColors(
-                  baseColor:
-                      isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  highlightColor:
-                      isDark ? Colors.grey[700]! : Colors.grey[100]!,
-                  child: Container(
-                      width: 130, height: 180, color: Colors.white),
+            Stack(
+              children: [
+                _buildImage(
+                  width: double.infinity,
+                  height: 160,
+                  isDark: isDark,
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16)),
                 ),
-                errorWidget: (_, __, ___) => Container(
-                  width: 130,
-                  height: 180,
-                  color: const Color(0xFF6B4EFF).withOpacity(0.1),
-                  child: const Icon(Icons.book,
-                      color: Color(0xFF6B4EFF), size: 40),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => provider.toggleSave(book),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isSaved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
+                        color: isSaved
+                            ? const Color(0xFF6B4EFF)
+                            : Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              book.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              book.author.isNotEmpty ? book.author : 'Unknown',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'USD ${book.price.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF6B4EFF),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    book.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: isDark
+                          ? Colors.white
+                          : const Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'USD ${book.priceDouble.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF6B4EFF),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -240,5 +285,14 @@ class BookCard extends StatelessWidget {
     );
   }
 
-  // ❌ REMOVED: DetailScreen({required Book book}) {} ← this was the bug!
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final provider = context.watch<ProductProvider>();
+    final isSaved = provider.isSaved(book.id);
+
+    return isHorizontal
+        ? _buildHorizontal(context, isDark, isSaved, provider)
+        : _buildVertical(context, isDark, isSaved, provider);
+  }
 }

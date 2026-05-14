@@ -1,11 +1,10 @@
 // lib/service/parse_books.dart
 import 'dart:convert';
-import '../models/book.dart';
+import '../models/product.dart';
 
-List<Book> parseBooks(String responseBody) {
+List<Product> parseBooks(String responseBody) {
   final data = json.decode(responseBody);
 
-  // ✅ DummyJSON wraps products in { "products": [...] }
   final List<dynamic> list = data is Map
       ? (data['products'] ?? data['books'] ?? [])
       : data;
@@ -13,11 +12,11 @@ List<Book> parseBooks(String responseBody) {
   return list
       .map((item) {
         try {
-          return Book.fromJson(item as Map<String, dynamic>);
+          return Product.fromJson(item as Map<String, dynamic>);
         } catch (e) {
           return null;
         }
       })
-      .whereType<Book>() // ✅ removes any nulls safely
+      .whereType<Product>()
       .toList();
 }

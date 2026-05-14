@@ -47,7 +47,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     const Text(
-                      'skincare App',
+                      'Healthcare App',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -68,10 +68,10 @@ class AboutScreen extends StatelessWidget {
                   _buildInfoTile(
                     context,
                     isDark,
-                    icon: '🍴',
-                    title: 'What is skincare?',
+                    icon: '🧴',
+                    title: 'What is healthcare?',
                     subtitle:
-                        'skincare is the practice of maintaining the health and appearance of your skin.',
+                        'Healthcare is the maintenance and improvement of health through the prevention, diagnosis, and treatment of disease, illness, injury, and other physical and mental impairments.',
                     color: const Color(0xFFFF6B35),
                   ),
                   _buildInfoTile(
@@ -100,6 +100,7 @@ class AboutScreen extends StatelessWidget {
                     icon: isDark ? '🌙' : '☀️',
                     title: isDark ? 'Dark Mode' : 'Light Mode',
                     subtitle: 'Switch between light and dark themes',
+                    colors: isDark ? const Color(0xFF6B6B8A) : const Color(0xFF9E9E9E),
                     trailing: Switch(
                       value: isDark,
                       onChanged: (_) => themeProvider.toggleTheme(),
@@ -123,7 +124,7 @@ class AboutScreen extends StatelessWidget {
                     title: 'Report a Bug',
                     subtitle: 'Help us improve by reporting issues',
                     color: const Color(0xFFEB5757),
-                    onTap: () => _launch('mailto:support@foodieapp.com'),
+                    onTap: () {},
                   ),
                   _buildActionTile(
                     context,
@@ -140,7 +141,7 @@ class AboutScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        '🧴 Skincare',
+                        '🧴 healthcare',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: const Color.fromARGB(255, 107, 107, 138),
@@ -200,7 +201,7 @@ class AboutScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'skincare App',
+                  'healthcare App',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -221,7 +222,6 @@ class AboutScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
@@ -335,7 +335,7 @@ class AboutScreen extends StatelessWidget {
     required String icon,
     required String title,
     required String subtitle,
-    required Widget trailing,
+    required Widget trailing, required Color colors,
   }) {
     return Padding(
       padding: const EdgeInsets.all(16),

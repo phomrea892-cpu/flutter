@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/book.dart';
-import 'package:flutter_application_1/provider/book_provider.dart';
+import 'package:flutter_application_1/models/product.dart';
+import 'package:flutter_application_1/provider/product_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<BookProvider>();
-    final savedBooks = provider.savedBooks;
+    final provider = context.watch<ProductProvider>();
+    final savedProducts = provider.savedBooks;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF3F4F6),
+      backgroundColor:
+          isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF3F4F6),
       body: CustomScrollView(
         slivers: [
-          // ── Sliver App Bar ────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
             centerTitle: true,
-             backgroundColor: const Color.fromARGB(255, 86, 12, 223),
+            backgroundColor: const Color.fromRGBO(200, 192, 214, 1),
             title: const Text('My Profile'),
-             automaticallyImplyLeading: false, // ✅ No back button on tab screen
+            automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color.fromARGB(255, 192, 88, 9), Color.fromARGB(255, 167, 121, 29)],
+                    colors: [
+                      Color.fromARGB(255, 192, 88, 9),
+                      Color.fromARGB(255, 167, 121, 29),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -40,7 +44,8 @@ class ProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 45,
                       backgroundColor: Colors.white24,
-                      child: Icon(Icons.person, size: 50, color: Colors.white),
+                      child: Icon(Icons.person,
+                          size: 50, color: Colors.white),
                     ),
                     SizedBox(height: 12),
                     Text(
@@ -54,7 +59,8 @@ class ProfileScreen extends StatelessWidget {
                     SizedBox(height: 4),
                     Text(
                       'phomrea892@gmail.com',
-                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -68,26 +74,25 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Stats ──────────────────────────────────────────
                   Row(
                     children: [
                       _StatCard(
                         icon: Icons.bookmark,
                         label: 'Saved',
-                        value: '${savedBooks.length}',
+                        value: '${savedProducts.length}',
                         color: const Color(0xFF6B4EFF),
                       ),
                       const SizedBox(width: 12),
                       const _StatCard(
-                        icon: Icons.menu_book,
-                        label: 'Reading',
+                        icon: Icons.local_mall,
+                        label: 'Ordered',
                         value: '3',
                         color: Color(0xFF10B981),
                       ),
                       const SizedBox(width: 12),
                       const _StatCard(
                         icon: Icons.check_circle,
-                        label: 'Finished',
+                        label: 'Reviewed',
                         value: '12',
                         color: Color(0xFFF59E0B),
                       ),
@@ -96,11 +101,10 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // ── Saved Books ────────────────────────────────────
-                  _SectionTitle(title: 'Saved product', isDark: isDark),
+                  _SectionTitle(title: 'Saved Products', isDark: isDark),
                   const SizedBox(height: 12),
 
-                  if (savedBooks.isEmpty)
+                  if (savedProducts.isEmpty)
                     const _EmptyState(
                       icon: Icons.bookmark_border,
                       message: 'No saved products yet.',
@@ -110,16 +114,16 @@ class ProfileScreen extends StatelessWidget {
                       height: 160,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: savedBooks.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemCount: savedProducts.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 12),
                         itemBuilder: (_, i) =>
-                            _SavedBookCard(book: savedBooks[i]),
+                            _SavedProductCard(product: savedProducts[i]),
                       ),
                     ),
 
                   const SizedBox(height: 24),
 
-                  // ── Orders ─────────────────────────────────────────
                   _SectionTitle(title: 'My Orders', isDark: isDark),
                   const SizedBox(height: 12),
 
@@ -131,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const _OrderCard(
-                    title: 'product Bundle Pack',
+                    title: 'Makeup Bundle Pack',
                     subtitle: 'Delivered · Dec 12, 2024',
                     icon: Icons.local_shipping,
                     color: Color(0xFF10B981),
@@ -139,23 +143,34 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // ── Settings ───────────────────────────────────────
                   _SectionTitle(title: 'Settings', isDark: isDark),
                   const SizedBox(height: 12),
 
-                  _SettingsTile(icon: Icons.person_outline, label: 'Edit Profile', onTap: () {}),
-                  _SettingsTile(icon: Icons.notifications_outlined, label: 'Notifications', onTap: () {}),
-                  _SettingsTile(icon: Icons.lock_outline, label: 'Privacy & Security', onTap: () {}),
-                  _SettingsTile(icon: Icons.help_outline, label: 'Help & Support', onTap: () {}),
+                  _SettingsTile(
+                      icon: Icons.person_outline,
+                      label: 'Edit Profile',
+                      onTap: () {}),
+                  _SettingsTile(
+                      icon: Icons.notifications_outlined,
+                      label: 'Notifications',
+                      onTap: () {}),
+                  _SettingsTile(
+                      icon: Icons.lock_outline,
+                      label: 'Privacy & Security',
+                      onTap: () {}),
+                  _SettingsTile(
+                      icon: Icons.help_outline,
+                      label: 'Help & Support',
+                      onTap: () {}),
 
                   const SizedBox(height: 16),
 
-                  // ── Logout ─────────────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {},
-                      icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
+                      icon: const Icon(Icons.logout,
+                          color: Color(0xFFEF4444)),
                       label: const Text(
                         'Log Out',
                         style: TextStyle(
@@ -165,8 +180,10 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(
+                            color: Color(0xFFEF4444)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -182,8 +199,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-
-// ── Widgets ─────────────────────────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -241,7 +256,9 @@ class _StatCard extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold, color: color),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color),
             ),
             const SizedBox(height: 2),
             Text(label,
@@ -254,9 +271,30 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _SavedBookCard extends StatelessWidget {
-  final Book book;
-  const _SavedBookCard({required this.book});
+class _SavedProductCard extends StatelessWidget {
+  final Product product;
+  const _SavedProductCard({required this.product});
+
+  Widget _buildCachedImage(String? url) {
+    final imageUrl = (url ?? '').toString().trim();
+    if (imageUrl.isEmpty) return const _ProductPlaceholder();
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl.startsWith('http')
+          ? imageUrl
+          : 'https://$imageUrl',
+      height: 110,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        height: 110,
+        width: double.infinity,
+        color: Colors.grey[300],
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      errorWidget: (_, __, ___) => const _ProductPlaceholder(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -278,21 +316,12 @@ class _SavedBookCard extends StatelessWidget {
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(12)),
-            // ✅ Fixed: uses book.coverUrl matching the Book model in detail_screen
-            child: book.coverUrl.isNotEmpty
-                ? Image.network(
-                    book.coverUrl,
-                    height: 110,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _BookPlaceholder(),
-                  )
-                : const _BookPlaceholder(),
+            child: _buildCachedImage(product.imageLink),
           ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Text(
-              book.title,
+              product.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -307,8 +336,8 @@ class _SavedBookCard extends StatelessWidget {
   }
 }
 
-class _BookPlaceholder extends StatelessWidget {
-  const _BookPlaceholder();
+class _ProductPlaceholder extends StatelessWidget {
+  const _ProductPlaceholder();
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +345,7 @@ class _BookPlaceholder extends StatelessWidget {
       height: 110,
       width: double.infinity,
       color: const Color(0xFFE5E7EB),
-      child: const Icon(Icons.menu_book,
+      child: const Icon(Icons.face_retouching_natural,
           color: Color(0xFF9CA3AF), size: 36),
     );
   }
@@ -379,7 +408,8 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
+          const Icon(Icons.chevron_right,
+              color: Color(0xFF9CA3AF)),
         ],
       ),
     );
@@ -446,7 +476,8 @@ class _EmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           Icon(icon, size: 40, color: const Color(0xFF9CA3AF)),

@@ -1,53 +1,64 @@
 // lib/service/book_service.dart
+import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/book.dart';
-import 'parse_books.dart';
+import '../models/product.dart';
 
 class BookService {
-  static const String _baseUrl = 'https://dummyjson.com/products';
+  static const String _baseUrl =
+      'https://makeup-api.herokuapp.com/api/v1/products.json';
 
-  // ✅ Removed: get price => null; (was causing issues)
+  // ── Load home products (Maybelline) ───────────────────────────
+  Future<List<Product>> readApi() async {
+    final uri = Uri.parse('$_baseUrl?brand=maybelline&limit=20');
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Product.fromJson(json)).toList();
+    }
+    throw Exception('readApi failed: ${response.statusCode}');
+  }
 
-  Future<List<Book>> fetchBooks(
+  // ── Search by product_type across ALL brands ──────────────────
+  // Used when a category chip is tapped (e.g. "lipstick", "mascara").
+  Future<List<Product>> searchByType(String productType) async {
+    final q = productType.trim();
+    if (q.isEmpty) return [];
+
+    final uri = Uri.parse(
+        '$_baseUrl?product_type=${Uri.encodeComponent(q)}');
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Product.fromJson(json)).toList();
+    }
+    throw Exception('searchByType failed: ${response.statusCode}');
+  }
+
+  // ── Fetch all products for client-side name search ────────────
+  // The Makeup API has no free-text name search endpoint, so we
+  // load all products and filter by name in the provider.
+  Future<List<Product>> fetchAll() async {
+    final uri = Uri.parse(_baseUrl);
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Product.fromJson(json)).toList();
+    }
+    throw Exception('fetchAll failed: ${response.statusCode}');
+  }
+
+  // ── Legacy generic fetch (kept for compatibility) ─────────────
+  Future<List<Product>> fetchBooks(
     String query,
-    List<Book> Function(String responseBody) parser,
+    List<Product> Function(String responseBody) parser,
   ) async {
-    try {
-      final q = query.trim();
-      final uri = q.isEmpty
-          ? Uri.parse('$_baseUrl?limit=20')
-          : Uri.parse(
-              '$_baseUrl/search?q=${Uri.encodeComponent(q)}&limit=20');
-      final response = await http.get(uri);
-      if (response.statusCode == 200) return parser(response.body);
-      throw Exception('fetchBooks failed: ${response.statusCode}');
-    } catch (e) {
-      throw Exception('fetchBooks error: $e');
-    }
-  }
-
-  Future<List<Book>> readapi() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl?limit=20'),
-      );
-      if (response.statusCode == 200) return parseBooks(response.body);
-      throw Exception('readapi failed: ${response.statusCode}');
-    } catch (e) {
-      throw Exception('readapi error: $e');
-    }
-  }
-
-  // ✅ Search API directly
-  Future<List<Book>> searchApi(String query) async {
-    try {
-      final uri = Uri.parse(
-          '$_baseUrl/search?q=${Uri.encodeComponent(query.trim())}&limit=20');
-      final response = await http.get(uri);
-      if (response.statusCode == 200) return parseBooks(response.body);
-      throw Exception('searchApi failed: ${response.statusCode}');
-    } catch (e) {
-      throw Exception('searchApi error: $e');
-    }
+    final q = query.trim();
+    final uri = q.isEmpty
+        ? Uri.parse('$_baseUrl?brand=maybelline')
+        : Uri.parse(
+            '$_baseUrl?product_type=${Uri.encodeComponent(q)}');
+    final response = await http.get(uri);
+    if (response.statusCode == 200) return parser(response.body);
+    throw Exception('fetchBooks failed: ${response.statusCode}');
   }
 }

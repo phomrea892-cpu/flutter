@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/provider/book_provider.dart';
+import 'package:flutter_application_1/provider/product_provider.dart';
 import 'package:flutter_application_1/widgets/book_cart.dart';
 import 'package:provider/provider.dart';
-class saveScreen extends StatelessWidget {
-  const saveScreen({super.key});
+
+class SaveScreen extends StatelessWidget {
+  const SaveScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Favorites')),
-      body: Consumer<BookProvider>(
+      appBar: AppBar(title: const Text('Favourites')),
+      body: Consumer<ProductProvider>(
         builder: (context, provider, _) {
           if (provider.savedBooks.isEmpty) {
             return Center(
@@ -24,18 +25,23 @@ class saveScreen extends StatelessWidget {
                       color: const Color(0xFF6B4EFF).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.bookmarks_outlined, size: 64, color: Color(0xFF6B4EFF)),
+                    child: const Icon(Icons.bookmarks_outlined,
+                        size: 64, color: Color(0xFF6B4EFF)),
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Your saved products are Empty',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    'Your favourites are empty',
+                    style: TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Save products from the home or search screen\nto access them here',
+                    'Save products from the Home or Search screen\nto find them here quickly.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    style: TextStyle(
+                        color: isDark
+                            ? Colors.grey[400]
+                            : Colors.grey[600]),
                   ),
                 ],
               ),
@@ -49,13 +55,15 @@ class saveScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B4EFF).withOpacity(0.1),
+                        color:
+                            const Color(0xFF6B4EFF).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${provider.savedBooks.length} books saved',
+                        '${provider.savedBooks.length} product${provider.savedBooks.length != 1 ? 's' : ''} saved',
                         style: const TextStyle(
                           color: Color(0xFF6B4EFF),
                           fontWeight: FontWeight.w600,
@@ -69,10 +77,13 @@ class saveScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: provider.savedBooks.length,
-                  itemBuilder: (_, i) =>
-                      BookCard(book: provider.savedBooks[i], isHorizontal: true),
+                  itemBuilder: (_, i) => BookCard(
+                    book: provider.savedBooks[i],
+                    isHorizontal: true,
+                  ),
                 ),
               ),
             ],
