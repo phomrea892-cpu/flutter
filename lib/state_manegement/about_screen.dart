@@ -77,15 +77,6 @@ class AboutScreen extends StatelessWidget {
                   _buildInfoTile(
                     context,
                     isDark,
-                    icon: '🌍',
-                    title: 'Global Cuisine',
-                    subtitle:
-                        'Explore authentic recipes from over 20 countries, from Italian pasta to Japanese sushi.',
-                    color: const Color(0xFF2D9CDB),
-                  ),
-                  _buildInfoTile(
-                    context,
-                    isDark,
                     icon: '❤️',
                     title: 'Save Favorites',
                     subtitle:
@@ -321,8 +312,6 @@ class AboutScreen extends StatelessWidget {
                 ],
               ),
             ),
-            if (onTap != null)
-              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
           ],
         ),
       ),

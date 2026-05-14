@@ -1,3 +1,4 @@
+// lib/state_manegement/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/product.dart';
 import 'package:flutter_application_1/provider/product_provider.dart';
@@ -18,6 +19,7 @@ class ProfileScreen extends StatelessWidget {
           isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF3F4F6),
       body: CustomScrollView(
         slivers: [
+          // ── Sliver App Bar ───────────────────────────────────────
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
@@ -74,6 +76,7 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Stats ────────────────────────────────────────
                   Row(
                     children: [
                       _StatCard(
@@ -101,13 +104,16 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  _SectionTitle(title: 'Saved Products', isDark: isDark),
+                  // ── Saved Products ───────────────────────────────
+                  _SectionTitle(
+                      title: 'Saved Products', isDark: isDark),
                   const SizedBox(height: 12),
 
                   if (savedProducts.isEmpty)
-                    const _EmptyState(
+                    _EmptyState(
                       icon: Icons.bookmark_border,
                       message: 'No saved products yet.',
+                      isDark: isDark,
                     )
                   else
                     SizedBox(
@@ -117,13 +123,15 @@ class ProfileScreen extends StatelessWidget {
                         itemCount: savedProducts.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(width: 12),
-                        itemBuilder: (_, i) =>
-                            _SavedProductCard(product: savedProducts[i]),
+                        itemBuilder: (_, i) => _SavedProductCard(
+                            product: savedProducts[i],
+                            isDark: isDark),
                       ),
                     ),
 
                   const SizedBox(height: 24),
 
+                  // ── Orders ───────────────────────────────────────
                   _SectionTitle(title: 'My Orders', isDark: isDark),
                   const SizedBox(height: 12),
 
@@ -143,6 +151,7 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
+                  // ── Settings ─────────────────────────────────────
                   _SectionTitle(title: 'Settings', isDark: isDark),
                   const SizedBox(height: 12),
 
@@ -165,6 +174,7 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
+                  // ── Log Out ───────────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -180,10 +190,9 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(
-                            color: Color(0xFFEF4444)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side:
+                            const BorderSide(color: Color(0xFFEF4444)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -199,6 +208,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+
+// ── Section Title ─────────────────────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -218,6 +229,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -233,13 +246,12 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1A1A2E)
-              : Colors.white,
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -262,8 +274,11 @@ class _StatCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF6B7280))),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? Colors.grey[400]
+                        : const Color(0xFF6B7280))),
           ],
         ),
       ),
@@ -271,18 +286,39 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+// ── Saved Product Card ────────────────────────────────────────────────────────
+
 class _SavedProductCard extends StatelessWidget {
   final Product product;
-  const _SavedProductCard({required this.product});
+  final bool isDark;
+  const _SavedProductCard(
+      {required this.product, required this.isDark});
 
-  Widget _buildCachedImage(String? url) {
-    final imageUrl = (url ?? '').toString().trim();
+  // Best image URL with all fallbacks + http→https fix
+  String _getImageUrl() {
+    final candidates = [
+      product.imageLink,
+      product.apiFeaturedImage,
+      product.coverUrl,
+    ];
+    for (final url in candidates) {
+      final raw = url.toString().trim();
+      if (raw.isEmpty) continue;
+      if (raw.startsWith('http://')) {
+        return raw.replaceFirst('http://', 'https://');
+      }
+      if (raw.startsWith('https://')) return raw;
+      return 'https://$raw';
+    }
+    return '';
+  }
+
+  Widget _buildImage() {
+    final imageUrl = _getImageUrl();
     if (imageUrl.isEmpty) return const _ProductPlaceholder();
 
     return CachedNetworkImage(
-      imageUrl: imageUrl.startsWith('http')
-          ? imageUrl
-          : 'https://$imageUrl',
+      imageUrl: imageUrl,
       height: 110,
       width: double.infinity,
       fit: BoxFit.cover,
@@ -290,7 +326,8 @@ class _SavedProductCard extends StatelessWidget {
         height: 110,
         width: double.infinity,
         color: Colors.grey[300],
-        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        child:
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       errorWidget: (_, __, ___) => const _ProductPlaceholder(),
     );
@@ -301,7 +338,7 @@ class _SavedProductCard extends StatelessWidget {
     return Container(
       width: 110,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -316,7 +353,7 @@ class _SavedProductCard extends StatelessWidget {
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(12)),
-            child: _buildCachedImage(product.imageLink),
+            child: _buildImage(),
           ),
           Padding(
             padding: const EdgeInsets.all(8),
@@ -324,10 +361,12 @@ class _SavedProductCard extends StatelessWidget {
               product.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827)),
+                  color: isDark
+                      ? Colors.white
+                      : const Color(0xFF111827)),
             ),
           ),
         ],
@@ -335,6 +374,8 @@ class _SavedProductCard extends StatelessWidget {
     );
   }
 }
+
+// ── Product Placeholder ───────────────────────────────────────────────────────
 
 class _ProductPlaceholder extends StatelessWidget {
   const _ProductPlaceholder();
@@ -351,6 +392,8 @@ class _ProductPlaceholder extends StatelessWidget {
   }
 }
 
+// ── Order Card ────────────────────────────────────────────────────────────────
+
 class _OrderCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -366,12 +409,11 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A2E)
-            : Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -397,24 +439,31 @@ class _OrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827))),
+                        color: isDark
+                            ? Colors.white
+                            : const Color(0xFF111827))),
                 const SizedBox(height: 3),
                 Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7280))),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? Colors.grey[400]
+                            : const Color(0xFF6B7280))),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right,
-              color: Color(0xFF9CA3AF)),
+          Icon(Icons.chevron_right,
+              color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
         ],
       ),
     );
   }
 }
+
+// ── Settings Tile ─────────────────────────────────────────────────────────────
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
@@ -451,12 +500,19 @@ class _SettingsTile extends StatelessWidget {
             Icon(icon, color: const Color(0xFF6B4EFF), size: 22),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w500)),
+              child: Text(
+                label,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.white
+                        : const Color(0xFF111827)),
+              ),
             ),
-            const Icon(Icons.chevron_right,
-                color: Color(0xFF9CA3AF)),
+            Icon(Icons.chevron_right,
+                color:
+                    isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
           ],
         ),
       ),
@@ -464,11 +520,18 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
+// ── Empty State ───────────────────────────────────────────────────────────────
+
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;
+  final bool isDark;
 
-  const _EmptyState({required this.icon, required this.message});
+  const _EmptyState({
+    required this.icon,
+    required this.message,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -476,16 +539,21 @@ class _EmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
           borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: const Color(0xFF9CA3AF)),
+          Icon(icon,
+              size: 40,
+              color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
           const SizedBox(height: 10),
           Text(message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF6B7280))),
+              style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? Colors.grey[400]
+                      : const Color(0xFF6B7280))),
         ],
       ),
     );

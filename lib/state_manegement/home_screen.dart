@@ -31,9 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
         if (fixed.startsWith('http://')) {
           fixed = fixed.replaceFirst('http://', 'https://');
         }
-        if (!fixed.startsWith('http')) {
-          fixed = 'https://$fixed';
-        }
         return fixed;
       }
     }
@@ -138,10 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 2,
         childAspectRatio: 0.65,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 15,
+        crossAxisSpacing: 4,
+        mainAxisSpacing: 3,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) =>

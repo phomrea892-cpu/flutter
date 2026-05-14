@@ -10,24 +10,18 @@ mixin GridStyle on ChangeNotifier {
     notifyListeners();
   }
 }
-
 class ProductProvider extends ChangeNotifier with GridStyle {
   final BookService _bookService = BookService();
-
   List<Product> featuredBooks = [];
   List<Product> trendingBooks = [];
   List<Product> searchResults = [];
   List<Product> savedBooks = [];
-
-  // Cache of all products for client-side name search
   List<Product> _allProducts = [];
 
   bool isLoadingFeatured = false;
   bool isLoadingTrending = false;
   bool isSearching = false;
   String error = '';
-
-  // ── Home ───────────────────────────────────────────────────────
   Future<void> loadHomeBooks() async {
     error = '';
     isLoadingFeatured = true;
@@ -47,10 +41,6 @@ class ProductProvider extends ChangeNotifier with GridStyle {
       notifyListeners();
     }
   }
-
-  // ── Search by free-text name (client-side filter) ──────────────
-  // The Makeup API has no name search endpoint, so we fetch all
-  // products once, cache them, then filter locally by name.
   Future<void> searchByName(String query) async {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) {
@@ -63,7 +53,6 @@ class ProductProvider extends ChangeNotifier with GridStyle {
     notifyListeners();
 
     try {
-      // Load full catalogue once and cache
       if (_allProducts.isEmpty) {
         _allProducts = await _bookService.fetchAll();
       }
@@ -82,8 +71,6 @@ class ProductProvider extends ChangeNotifier with GridStyle {
       notifyListeners();
     }
   }
-
-  // ── Search by product_type via API (used by category chips) ────
   Future<void> searchByType(String productType) async {
     final q = productType.trim();
     if (q.isEmpty) {
@@ -106,18 +93,12 @@ class ProductProvider extends ChangeNotifier with GridStyle {
       notifyListeners();
     }
   }
-
-  // ── Legacy searchBooks (kept so nothing else breaks) ──────────
   Future<void> searchBooks(String query) => searchByName(query);
-
-  // ── Clear search results ───────────────────────────────────────
   void clearSearch() {
     searchResults = [];
     isSearching = false;
     notifyListeners();
   }
-
-  // ── Saved / Favourites ─────────────────────────────────────────
   bool isSaved(String productId) =>
       savedBooks.any((p) => p.id == productId);
 
