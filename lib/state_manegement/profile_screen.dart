@@ -1,4 +1,4 @@
-// lib/state_manegement/profile_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/product.dart';
 import 'package:flutter_application_1/provider/product_provider.dart';
@@ -19,7 +19,6 @@ class ProfileScreen extends StatelessWidget {
           isDark ? const Color(0xFF0D0D1A) : const Color(0xFFF3F4F6),
       body: CustomScrollView(
         slivers: [
-          // ── Sliver App Bar ───────────────────────────────────────
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
@@ -76,7 +75,6 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Stats ────────────────────────────────────────
                   Row(
                     children: [
                       _StatCard(
@@ -103,8 +101,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // ── Saved Products ───────────────────────────────
                   _SectionTitle(
                       title: 'Saved Products', isDark: isDark),
                   const SizedBox(height: 12),
@@ -130,8 +126,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
 
                   const SizedBox(height: 24),
-
-                  // ── Orders ───────────────────────────────────────
                   _SectionTitle(title: 'My Orders', isDark: isDark),
                   const SizedBox(height: 12),
 
@@ -150,8 +144,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // ── Settings ─────────────────────────────────────
                   _SectionTitle(title: 'Settings', isDark: isDark),
                   const SizedBox(height: 12),
 
@@ -173,8 +165,6 @@ class ProfileScreen extends StatelessWidget {
                       onTap: () {}),
 
                   const SizedBox(height: 16),
-
-                  // ── Log Out ───────────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -209,8 +199,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-// ── Section Title ─────────────────────────────────────────────────────────────
-
 class _SectionTitle extends StatelessWidget {
   final String title;
   final bool isDark;
@@ -228,8 +216,6 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
-// ── Stat Card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
@@ -257,7 +243,7 @@ class _StatCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+
             ),
           ],
         ),
@@ -286,15 +272,12 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Saved Product Card ────────────────────────────────────────────────────────
 
 class _SavedProductCard extends StatelessWidget {
   final Product product;
   final bool isDark;
   const _SavedProductCard(
       {required this.product, required this.isDark});
-
-  // Best image URL with all fallbacks + http→https fix
   String _getImageUrl() {
     final candidates = [
       product.imageLink,
@@ -344,7 +327,7 @@ class _SavedProductCard extends StatelessWidget {
           BoxShadow(
               color: Colors.black.withOpacity(0.06),
               blurRadius: 6,
-              offset: const Offset(0, 2)),
+             ),
         ],
       ),
       child: Column(
@@ -374,9 +357,6 @@ class _SavedProductCard extends StatelessWidget {
     );
   }
 }
-
-// ── Product Placeholder ───────────────────────────────────────────────────────
-
 class _ProductPlaceholder extends StatelessWidget {
   const _ProductPlaceholder();
 
@@ -391,8 +371,6 @@ class _ProductPlaceholder extends StatelessWidget {
     );
   }
 }
-
-// ── Order Card ────────────────────────────────────────────────────────────────
 
 class _OrderCard extends StatelessWidget {
   final String title;
@@ -462,9 +440,6 @@ class _OrderCard extends StatelessWidget {
     );
   }
 }
-
-// ── Settings Tile ─────────────────────────────────────────────────────────────
-
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -519,9 +494,6 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
-
-// ── Empty State ───────────────────────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;
@@ -532,7 +504,6 @@ class _EmptyState extends StatelessWidget {
     required this.message,
     required this.isDark,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
